@@ -1,4 +1,4 @@
-package phraseText
+package text
 
 data class PhraseTextRaw(var header: String, var textBody: Array<String>, var answers: Array<String>) {
 

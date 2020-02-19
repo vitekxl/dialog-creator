@@ -7,15 +7,15 @@ class Configs {
                 if(field  == "NAN"){
                     return "models.items.phrase.FilteredPhrase"
                 }
-                return field;
+                return field
             }
 
-        public var INPUT_FOLDER : String = "NAN"
+        public var INPUT_SCRIPT_FOLDER : String = "NAN"
             get() {
                 if(field == "NAN"){
                     throw IllegalArgumentException("INPUT FOLDER IS NOT SET")
                 }
-                return field;
+                return field
             }
 
         public var OUTPUT_PHRASES_FOLDER : String = "NAN"
@@ -23,7 +23,7 @@ class Configs {
                 if(field  == "NAN"){
                     throw IllegalArgumentException("OUTPUT FOLDER IS NOT SET")
                 }
-                return field;
+                return field
             }
 
         public var OUTPUT_GRAPHS_FOLDER : String = "NAN"
@@ -31,7 +31,15 @@ class Configs {
                 if(field == "NAN"){
                     throw IllegalArgumentException("OUTPUT FOLDER IS NOT SET")
                 }
-                return field;
+                return field
+            }
+
+        public var OUTPUT_ROUTERS_FILE : String = "NAN"
+            get() {
+                if(field == "NAN"){
+                    throw IllegalArgumentException("ROUTERS FOLDER IS NOT SET")
+                }
+                return field
             }
 
         public const val DIALOG_READER_HEADER_SEPARATOR  : String = "----"

@@ -1,4 +1,4 @@
-package phraseText
+package text
 
 import models.Answer
 import models.items.text.PhraseText
@@ -7,13 +7,13 @@ import java.lang.IllegalStateException
 class PhraseTextBuilder() {
 
     var id : String? = null
-        private set;
+        private set
     var texts = ArrayList<String>()
-        private set;
+        private set
     var answers = ArrayList<Answer>()
-        private set;
+        private set
     var className : String? = null
-        private set;
+        private set
 
     public fun id(id: String) : PhraseTextBuilder
     {
@@ -40,13 +40,13 @@ class PhraseTextBuilder() {
 
     public fun texts(texts: ArrayList<String>) : PhraseTextBuilder
     {
-        this.texts = texts;
+        this.texts = texts
         return this
     }
 
     public fun addText(text: String) : PhraseTextBuilder
     {
-        this.texts.add(text);
+        this.texts.add(text)
         return this
     }
 
