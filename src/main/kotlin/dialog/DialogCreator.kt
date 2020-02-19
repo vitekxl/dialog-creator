@@ -62,7 +62,7 @@ class DialogCreator {
                     writeRoutersToFile(routerFile, routerProperty)
                     logger.info("SUCCESS ")
                 }catch (e: Exception){
-                    logger.warn("ERROR, skip")
+                    logger.warn("ERROR, skip: ${e.message}")
                 }
             }
             logger.info("---- end recognition")
@@ -98,7 +98,11 @@ class DialogCreator {
             logger.info(">> readPhrasesFromFile : $file")
             val res = arrayListOf<PhraseText>()
             for (phraseTextRaw in DialogReader.readPhraseTextRaw(file)) {
-                res.add(PhraseTextFabric.create(phraseTextRaw))
+                try {
+                    res.add(PhraseTextFabric.create(phraseTextRaw))
+                }catch (e: Exception){
+                    logger.warn("$phraseTextRaw cannot be parsed")
+                }
             }
             logger.info("<< readPhrasesFromFile :  read total ${res.size} phrases")
             return res.toTypedArray()

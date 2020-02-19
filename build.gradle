@@ -37,7 +37,7 @@ compileTestKotlin {
 
 jar {
     manifest {
-        attributes "Main-Class": "start/Main"
+        attributes "Main-Class": "CreatorMain"
     }
 
     from {

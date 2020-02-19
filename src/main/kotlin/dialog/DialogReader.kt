@@ -66,7 +66,13 @@ class DialogReader {
                         }
                     }
                 }
+                if(answers.isNotEmpty()){
+                    rawText.answers = answers.toTypedArray()
+                    list.add(rawText)
+                    answers.clear()
+                }
             }
+
             logger.info("<< read ${list.size} raw phrase texts")
             return list.toTypedArray()
         }

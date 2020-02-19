@@ -51,5 +51,10 @@ class ArgsInput {
                 throw IllegalArgumentException("some arguments not found: ${errorList.toTypedArray().contentToString()}")
             }
         }
+
+        public fun isHelp(args: Array<String>) : Boolean{
+            if(args.isEmpty()) return false
+             return args[0] == "-h" || args[0] == "-help"
+        }
     }
 }
