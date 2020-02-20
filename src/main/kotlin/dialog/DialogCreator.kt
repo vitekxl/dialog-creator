@@ -42,29 +42,53 @@ class DialogCreator {
             filesInFolder.forEach{ logger.info("found: ${it.name}") }
 
             logger.info("---- start recognition")
-            for (file in filesInFolder) {
+
+            val phrasesListMap = hashMapOf<String, ArrayList<PhraseText>>()
+            val propertiesListMap = hashMapOf<String, RouterProperties>()
+
+            for(file in filesInFolder) {
                 try {
+                    logger.info("")
                     logger.info("try to parse $file ")
-                    val phrases = readPhrasesFromFile(file)
-                    val graph = createGraph(phrases)
-
                     val routerProperty = DialogReader.readProperty(file)
+                    if (propertiesListMap[routerProperty.id] == null) {
+                        propertiesListMap[routerProperty.id] = routerProperty;
+                    }
+                    val phrases = readPhrasesFromFile(file)
                     val dialogName = routerProperty.id
-                    val routerFile = File(Configs.OUTPUT_ROUTERS_FILE)
-                    val phraseFile = File(Configs.OUTPUT_PHRASES_FOLDER, "$dialogName.json")
-                    val graphFile = File(Configs.OUTPUT_GRAPHS_FOLDER, "$dialogName.graphml")
-
-                    logger.info("write ${phrases.toList().map { it.id }.toTypedArray().contentToString()} phrases to ${phraseFile.absolutePath}")
-                    PhraseTextStream.write(phrases, phraseFile.absolutePath)
-                    logger.info("write graph $graph phrases to ${graphFile.absolutePath}")
-                    GraphMLWriter.outputGraph(graph, graphFile.outputStream())
-                    logger.info("write router Property $routerProperty phrases to ${routerFile.absolutePath}")
-                    writeRoutersToFile(routerFile, routerProperty)
-                    logger.info("SUCCESS ")
-                }catch (e: Exception){
+                    if (phrasesListMap[dialogName] == null) {
+                        phrasesListMap[dialogName] = arrayListOf();
+                    }
+                    logger.info("add to $dialogName")
+                    phrasesListMap[dialogName]!!.addAll(phrases);
+                } catch (e: Exception) {
                     logger.warn("ERROR, skip: ${e.message}")
                 }
             }
+
+            for (dialogId in phrasesListMap.keys) {
+                try {
+                    val phrases = phrasesListMap[dialogId]!!.toTypedArray()
+                    val graph = createGraph(phrases)
+                    val routerProperty = propertiesListMap[dialogId]!!
+                    val routerFile = File(Configs.OUTPUT_ROUTERS_FILE)
+                    val phraseFile = File(Configs.OUTPUT_PHRASES_FOLDER, "$dialogId.json")
+                    val graphFile = File(Configs.OUTPUT_GRAPHS_FOLDER, "$dialogId.graphml")
+
+                    logger.info("write ${phrases.toList().map { it.id }.toTypedArray().contentToString()} phrases to ${phraseFile.absolutePath}")
+                    PhraseTextStream.write(phrases, phraseFile.absolutePath)
+
+                    logger.info("write graph $graph phrases to ${graphFile.absolutePath}")
+                    GraphMLWriter.outputGraph(graph, graphFile.outputStream())
+
+                    logger.info("write router Property $routerProperty phrases to ${routerFile.absolutePath}")
+                    writeRoutersToFile(routerFile, routerProperty)
+                    logger.info("SUCCESS ")
+                } catch (e: Exception) {
+                    logger.warn("ERROR, skip: ${e.message}")
+                }
+            }
+
             logger.info("---- end recognition")
         }
 
@@ -82,6 +106,12 @@ class DialogCreator {
             for (phrase in phrases) {
                 for (answer in phrase.answers) {
                     if(answer.type == AnswerType.SIMPLE){
+                        if(vertexes[answer.id] == null){
+                            logger.warn("vertex ${answer.id} not exist , but is in answers ${phrase.id}")
+                            logger.warn("add vertex ${answer.id} in graph, but not in phrases")
+                            vertexes[answer.id] = graph.addVertex(cnt++)
+                            vertexes[answer.id]!!.setProperty(Indexable.ID_NAME, answer.id)
+                        }
                         graph.addEdge(cnt++, vertexes[phrase.id], vertexes[answer.id],
                             "${vertexes[phrase.id]!!.getProperty<String>(Indexable.ID_NAME)} -> " +
                                     "${vertexes[answer.id]!!.getProperty<String>(Indexable.ID_NAME)}")
