@@ -35,9 +35,9 @@ class DialogCreator {
             logger.info(">> createDialogs: $folder")
 
             val filesInFolder = Files
-                .walk(Paths.get(folder))
+                .walk(Paths.get(folder), 2)
                 .filter { isRegularFile(it) }
-                .map { File(folder, it.fileName.toString())}
+                .map { it.toAbsolutePath().toFile() }
                 .toList()
 
             filesInFolder.forEach{ logger.info("found: ${it.name}") }
@@ -144,7 +144,7 @@ class DialogCreator {
                     }
                 }
             }
-            logger.info("<<createGraph: res $graph")
+            logger.info("<< createGraph: res $graph")
             return graph
         }
 
@@ -156,7 +156,7 @@ class DialogCreator {
                 try {
                     res.add(PhraseTextFabric.create(phraseTextRaw))
                 }catch (e: Exception){
-                    logger.error("$phraseTextRaw cannot be parsed correctly")
+                    logger.error("cannot be parsed correctly $phraseTextRaw")
                 }
             }
             logger.info("<< readPhrasesFromFile :  read total ${res.size} phrases")
