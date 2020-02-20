@@ -43,8 +43,8 @@ class Configs {
             }
 
         public const val DIALOG_READER_HEADER_SEPARATOR  : String = "----"
-        public const val DIALOG_READER_MULTIPLY_TEXT_SEPARATOR  : String = "##"
-        public const val DIALOG_READER_ROUTER_PROPERTY_SEPARATOR  : String = "#"
+        public const val DIALOG_READER_MULTIPLY_TEXT_SEPARATOR  : String = "@"
+        public const val DIALOG_READER_ROUTER_PROPERTY_SEPARATOR  : String = "$"
         public const val DIALOG_READER_ANSWER_SEPARATOR  : String = ">"
 
     }

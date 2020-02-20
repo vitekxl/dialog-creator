@@ -17,6 +17,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import router.RouterProperties
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileReader
 import java.io.FileWriter
 import java.nio.file.Files
@@ -41,20 +42,33 @@ class DialogCreator {
 
             filesInFolder.forEach{ logger.info("found: ${it.name}") }
 
-            logger.info("---- start recognition")
+            logger.info("")
+            logger.info("-------- start recognition --------")
+            logger.info("")
 
             val phrasesListMap = hashMapOf<String, ArrayList<PhraseText>>()
             val propertiesListMap = hashMapOf<String, RouterProperties>()
 
             for(file in filesInFolder) {
+                    logger.info("try to parse $file ")
+                val routerProperty : RouterProperties
+                val phrases : Array<PhraseText>
                 try {
                     logger.info("")
-                    logger.info("try to parse $file ")
-                    val routerProperty = DialogReader.readProperty(file)
+                    logger.info("-------- read routers property --------")
+                    logger.info("")
+
+                    routerProperty = DialogReader.readProperty(file)
+
+                    logger.info("")
+                    logger.info("-------- read phrases --------")
+                    logger.info("")
+
+                    phrases = readPhrasesFromFile(file)
+
                     if (propertiesListMap[routerProperty.id] == null) {
                         propertiesListMap[routerProperty.id] = routerProperty;
                     }
-                    val phrases = readPhrasesFromFile(file)
                     val dialogName = routerProperty.id
                     if (phrasesListMap[dialogName] == null) {
                         phrasesListMap[dialogName] = arrayListOf();
@@ -67,13 +81,23 @@ class DialogCreator {
             }
 
             for (dialogId in phrasesListMap.keys) {
+                logger.info("")
+                logger.info("-------- creating dialog ${phrasesListMap.keys} --------")
+                logger.info("")
                 try {
                     val phrases = phrasesListMap[dialogId]!!.toTypedArray()
+                    logger.info("")
+                    logger.info("-------- creating graph --------")
+                    logger.info("")
                     val graph = createGraph(phrases)
                     val routerProperty = propertiesListMap[dialogId]!!
                     val routerFile = File(Configs.OUTPUT_ROUTERS_FILE)
                     val phraseFile = File(Configs.OUTPUT_PHRASES_FOLDER, "$dialogId.json")
                     val graphFile = File(Configs.OUTPUT_GRAPHS_FOLDER, "$dialogId.graphml")
+
+                    logger.info("")
+                    logger.info("-------- writing --------")
+                    logger.info("")
 
                     logger.info("write ${phrases.toList().map { it.id }.toTypedArray().contentToString()} phrases to ${phraseFile.absolutePath}")
                     PhraseTextStream.write(phrases, phraseFile.absolutePath)
@@ -100,23 +124,23 @@ class DialogCreator {
             for (phrase in phrases) {
                 vertexes[phrase.id] = graph.addVertex(cnt++)
                 graph.getVertex(vertexes[phrase.id]!!.id).setProperty(Indexable.ID_NAME, phrase.id)
-                logger.info("added vertex ${phrase.id}")
+                logger.info("added vertex [${phrase.id}]")
             }
 
             for (phrase in phrases) {
                 for (answer in phrase.answers) {
                     if(answer.type == AnswerType.SIMPLE){
                         if(vertexes[answer.id] == null){
-                            logger.warn("vertex ${answer.id} not exist , but is in answers ${phrase.id}")
-                            logger.warn("add vertex ${answer.id} in graph, but not in phrases")
+                            logger.warn("vertex [${answer.id}] not exist , but is in answers ${phrase.id}")
+                            logger.warn("add vertex p${answer.id}] in graph, but not in phrases")
                             vertexes[answer.id] = graph.addVertex(cnt++)
                             vertexes[answer.id]!!.setProperty(Indexable.ID_NAME, answer.id)
                         }
                         graph.addEdge(cnt++, vertexes[phrase.id], vertexes[answer.id],
                             "${vertexes[phrase.id]!!.getProperty<String>(Indexable.ID_NAME)} -> " +
                                     "${vertexes[answer.id]!!.getProperty<String>(Indexable.ID_NAME)}")
-                        logger.info("added edge ${vertexes[phrase.id]!!.getProperty<String>(Indexable.ID_NAME)} -> " +
-                                "${vertexes[answer.id]!!.getProperty<String>(Indexable.ID_NAME)}")
+                        logger.info("added edge [${vertexes[phrase.id]!!.getProperty<String>(Indexable.ID_NAME)} -> " +
+                                "${vertexes[answer.id]!!.getProperty<String>(Indexable.ID_NAME)}]")
                     }
                 }
             }
@@ -126,12 +150,13 @@ class DialogCreator {
 
         public fun readPhrasesFromFile(file: File) : Array<PhraseText>{
             logger.info(">> readPhrasesFromFile : $file")
+            logger.info("")
             val res = arrayListOf<PhraseText>()
             for (phraseTextRaw in DialogReader.readPhraseTextRaw(file)) {
                 try {
                     res.add(PhraseTextFabric.create(phraseTextRaw))
                 }catch (e: Exception){
-                    logger.warn("$phraseTextRaw cannot be parsed")
+                    logger.error("$phraseTextRaw cannot be parsed correctly")
                 }
             }
             logger.info("<< readPhrasesFromFile :  read total ${res.size} phrases")
@@ -141,13 +166,16 @@ class DialogCreator {
         public fun writeRoutersToFile(file: File, routerProperties: RouterProperties ){
             logger.info(">> writeRoutersToFile : file= $file, routerProperties=$routerProperties" )
             val obj = JsonObject(routerProperties.map())
-
-            if(!file.exists()){
-                logger.warn("file not exits! create new" )
+            val rotersArray : JsonArray<JsonObject>;
+            try {
+                rotersArray = Klaxon().parseJsonArray(FileReader(file)) as JsonArray<JsonObject>
+            }catch (e: Exception){
+                if(e is FileNotFoundException)   logger.warn("file not exits! create new" )
+                else   logger.warn("Error read file! create new" )
                 val arr = JsonArray<JsonObject>()
                 arr.add(obj)
                 FileWriter(file).use {
-                   it.write(arr.toJsonString())
+                    it.write(arr.toJsonString())
                     logger.info("write ${arr.toJsonString()}" )
                 }
                 logger.info("<< writeRoutersToFile: OK" )
@@ -155,7 +183,6 @@ class DialogCreator {
             }
 
             logger.info("read routers File" )
-            val rotersArray = Klaxon().parseJsonArray(FileReader(file)) as JsonArray<JsonObject>
             logger.info("find ${rotersArray.size} routers" )
             var isContain = false
             for (prop in rotersArray) {

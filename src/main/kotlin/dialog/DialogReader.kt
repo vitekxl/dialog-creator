@@ -5,9 +5,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import router.RouterProperties
 import text.PhraseTextRaw
+import tools.StringTool
 import java.io.File
 import java.io.FileReader
-import java.lang.StringBuilder
+import java.lang.Exception
 
 class DialogReader {
 
@@ -25,45 +26,52 @@ class DialogReader {
                 val answers = arrayListOf<String>()
                 var readText = ""
                 var rawText = PhraseTextRaw()
-
+                var cnt = 0;
                 for (line in it.readLines()) {
                     var exit = false
-                    while (!exit) {
-                        exit = true
-                        when (stepCnt) {
-                            0 -> if (line.contains(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
-                                rawText.header = line.split(Configs.DIALOG_READER_HEADER_SEPARATOR)[1].trim()
-                                stepCnt++
-                                logger.info("find header $rawText.header")
-                            }
-                            1 -> if (line.contains(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)) {
-                                if(readText.isNotEmpty()) {
-                                    texts.add(trimFromBreaks(readText))
+                    cnt ++;
+                    try {
+                        while (!exit) {
+                            exit = true
+                            when (stepCnt) {
+                                0 -> if (line.contains(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
+                                    rawText.header = line.split(Configs.DIALOG_READER_HEADER_SEPARATOR)[1].trim()
+                                    stepCnt++
                                 }
-                                readText = line.split(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)[1].trim()
-                            } else if (line.contains(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
-                                texts.add(trimFromBreaks(readText))
-                                logger.info("added text for $rawText.header")
-                                rawText.textBody = texts.toTypedArray()
-                                texts.clear()
-                                readText = ""
-                                stepCnt++
-                                exit = false
-                            } else {
-                                readText += line
-                            }
-                            2 -> if (line.contains(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
-                                answers.add(line.split(Configs.DIALOG_READER_ANSWER_SEPARATOR)[1].trim())
-                            } else if (line.contains(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
-                                rawText.answers = answers.toTypedArray()
-                                logger.info("readed $rawText")
-                                list.add(rawText)
-                                rawText = PhraseTextRaw()
-                                answers.clear()
-                                stepCnt = 0
-                                exit = false
+                                1 -> if (line.contains(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)) {
+                                    prepareAndAddText(readText, texts);
+                                    readText = line.split(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)[1].trim()
+
+                                } else if (line.contains(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
+                                    prepareAndAddText(readText, texts);
+                                    rawText.textBody = texts.toTypedArray()
+                                    texts.clear()
+                                    readText = ""
+                                    stepCnt++
+                                    exit = false
+                                } else {
+                                    readText += "\n"
+                                    readText += line
+                                }
+                                2 -> if (line.contains(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
+                                    answers.add(line.split(Configs.DIALOG_READER_ANSWER_SEPARATOR)[1].trim())
+                                } else if (line.contains(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
+                                    rawText.answers = answers.toTypedArray()
+
+                                    if(logger.isDebugEnabled) logger.debug("READ: $rawText")
+                                    else logger.info("READ: ${rawText.header}")
+
+                                    list.add(rawText)
+                                    rawText = PhraseTextRaw()
+                                    answers.clear()
+                                    stepCnt = 0
+                                    exit = false
+                                }
                             }
                         }
+                    }catch (e : Exception){
+                        logger.error("error at line $cnt : $line ($file) skipped")
+                        stepCnt = 0;
                     }
                 }
                 if(answers.isNotEmpty()){
@@ -104,11 +112,11 @@ class DialogReader {
         }
 
 
-        private fun trimFromBreaks(text: String) : String{
-            var res = StringBuilder(text)
-            while (res[0] == '\n') res.deleteCharAt(0)
-            while (res.last() == '\n') res.deleteCharAt(res.lastIndex)
-            return res.toString().trim()
+        private fun prepareAndAddText(text: String, list: ArrayList<String>) {
+            val res =  StringTool.fixText(text);
+            if(res.isNotEmpty()) {
+                list.add(res)
+            }
         }
 
     }

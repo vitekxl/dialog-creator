@@ -17,13 +17,13 @@ class PhraseTextFabric {
         private val DEF_CLAZZ = Configs.PHRASE_TEXT_DEF_CLASS
 
         public fun create(raw : PhraseTextRaw): PhraseText {
-            logger.info(">> create from: $raw")
             val phraseBuilder = PhraseTextBuilder()
             processHeader(phraseBuilder, raw)
             processBody(phraseBuilder, raw)
             processAnswers(phraseBuilder, raw)
             val res = phraseBuilder.build()
-            logger.info("<< created : $res")
+            if(logger.isDebugEnabled) logger.debug("CREATED: $res")
+            else logger.info("CREATED: ${res.id}")
             return res
         }
 
