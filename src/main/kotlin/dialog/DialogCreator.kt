@@ -166,20 +166,12 @@ class DialogCreator {
         public fun writeRoutersToFile(file: File, routerProperties: RouterProperties ){
             logger.info(">> writeRoutersToFile : file= $file, routerProperties=$routerProperties" )
             val obj = JsonObject(routerProperties.map())
-            val rotersArray : JsonArray<JsonObject>;
+            var rotersArray = JsonArray<JsonObject>()
             try {
                 rotersArray = Klaxon().parseJsonArray(FileReader(file)) as JsonArray<JsonObject>
             }catch (e: Exception){
                 if(e is FileNotFoundException)   logger.warn("file not exits! create new" )
                 else   logger.warn("Error read file! create new" )
-                val arr = JsonArray<JsonObject>()
-                arr.add(obj)
-                FileWriter(file).use {
-                    it.write(arr.toJsonString())
-                    logger.info("write ${arr.toJsonString()}" )
-                }
-                logger.info("<< writeRoutersToFile: OK" )
-                return
             }
 
             logger.info("read routers File" )
@@ -207,7 +199,7 @@ class DialogCreator {
             logger.info("add routers property to array" )
             rotersArray.add(obj)
             logger.info("write: ${rotersArray.toJsonString()}" )
-            FileWriter(file).write(rotersArray.toJsonString())
+            FileWriter(file).use{ it.write(rotersArray.toJsonString()) }
             logger.info("<< writeRoutersToFile: OK" )
         }
     }
