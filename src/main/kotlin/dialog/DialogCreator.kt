@@ -35,7 +35,7 @@ class DialogCreator {
             logger.info(">> createDialogs: $folder")
 
             val filesInFolder = Files
-                .walk(Paths.get(folder), 2)
+                .walk(Paths.get(folder), 10)
                 .filter { isRegularFile(it) }
                 .map { it.toAbsolutePath().toFile() }
                 .toList()
