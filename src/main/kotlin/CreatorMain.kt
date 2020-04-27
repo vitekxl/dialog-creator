@@ -27,6 +27,7 @@ class CreatorMain {
             logger.info("OUTPUT_GRAPHS_FOLDER = ${Configs.OUTPUT_GRAPHS_FOLDER}")
             logger.info("OUTPUT_PHRASES_FOLDER= ${Configs.OUTPUT_PHRASES_FOLDER}")
             logger.info("OUTPUT_ROUTERS_FILE  = ${Configs.OUTPUT_ROUTERS_FILE}")
+            logger.info("PHRASE_TEXT_DEF_CLASS = ${Configs.PHRASE_TEXT_DEF_CLASS}")
         }
         private fun printHelp(){
             val message = """
