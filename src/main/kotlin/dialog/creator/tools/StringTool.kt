@@ -1,4 +1,4 @@
-package tools
+package dialog.creator.tools
 
 import models.items.text.PhraseText
 import java.lang.StringBuilder

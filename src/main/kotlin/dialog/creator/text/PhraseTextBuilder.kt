@@ -1,4 +1,4 @@
-package text
+package dialog.creator.text
 
 import models.Answer
 import models.items.text.PhraseText

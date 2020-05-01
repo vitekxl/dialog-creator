@@ -1,11 +1,11 @@
-package dialog
+package dialog.creator.dialog
 
-import Configs
+import dialog.creator.Configs
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import router.RouterProperties
-import text.PhraseTextRaw
-import tools.StringTool
+import dialog.creator.router.RouterProperties
+import dialog.creator.text.PhraseTextRaw
+import dialog.creator.tools.StringTool
 import java.io.File
 import java.io.FileReader
 import java.lang.Exception
@@ -28,6 +28,7 @@ class DialogReader {
                 var rawText = PhraseTextRaw()
                 var cnt = 0;
                 for (line in it.readLines()) {
+                    if (line.trim().startsWith("//")) continue; // comments
                     var exit = false
                     cnt ++;
                     try {
@@ -39,11 +40,17 @@ class DialogReader {
                                     stepCnt++
                                 }
                                 1 -> if (line.contains(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)) {
-                                    prepareAndAddText(readText, texts);
+                                    prepareAndAddText(
+                                        readText,
+                                        texts
+                                    );
                                     readText = line.split(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)[1].trim()
 
                                 } else if (line.contains(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
-                                    prepareAndAddText(readText, texts);
+                                    prepareAndAddText(
+                                        readText,
+                                        texts
+                                    );
                                     rawText.textBody = texts.toTypedArray()
                                     texts.clear()
                                     readText = ""
@@ -85,7 +92,7 @@ class DialogReader {
             return list.toTypedArray()
         }
 
-        public fun readProperty(file: File): RouterProperties{
+        public fun readProperty(file: File): RouterProperties {
             logger.info(">> readProperty from $file")
 
             val map = hashMapOf<String,Any>()

@@ -1,7 +1,9 @@
-import dialog.DialogCreator
+package dialog.creator
+
+import dialog.creator.dialog.DialogCreator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import tools.ArgsInput
+import dialog.creator.tools.ArgsInput
 
 // -i C:\Users\bilousov\IdeaProjects\dialog-game\scripts -orf C:\Users\bilousov\IdeaProjects\dialog-creator\src\main\resources\routers\routers.json -og C:\Users\bilousov\IdeaProjects\dialog-creator\src\main\resources\output -op C:\Users\bilousov\IdeaProjects\dialog-creator\src\main\resources\output
 class CreatorMain {

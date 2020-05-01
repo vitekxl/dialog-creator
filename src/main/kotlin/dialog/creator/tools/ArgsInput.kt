@@ -1,5 +1,6 @@
-package tools
+package dialog.creator.tools
 
+import dialog.creator.Configs
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.IllegalArgumentException

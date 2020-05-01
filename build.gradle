@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'viktor.project'
-version '1.1.2'
+version '1.2'
 
 sourceCompatibility = 1.8
 
@@ -37,7 +37,7 @@ compileTestKotlin {
 
 jar {
     manifest {
-        attributes "Main-Class": "CreatorMain"
+        attributes "Main-Class": "dialog.creator.CreatorMain"
     }
 
     from {

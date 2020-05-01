@@ -1,10 +1,10 @@
-package dialog
+package dialog.creator.dialog
 
-import Configs
+import dialog.creator.Configs
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
-import text.PhraseTextFabric
+import dialog.creator.text.PhraseTextFabric
 import com.tinkerpop.blueprints.Graph
 import com.tinkerpop.blueprints.Vertex
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph
@@ -15,7 +15,7 @@ import models.items.text.PhraseText
 import models.items.text.PhraseTextStream
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import router.RouterProperties
+import dialog.creator.router.RouterProperties
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileReader
@@ -30,6 +30,8 @@ class DialogCreator {
 
         private val logger = LoggerFactory.getLogger(DialogCreator::class.java) as Logger
 
+        private lateinit var phrasesListMap : HashMap<String, ArrayList<PhraseText>>
+        private lateinit var propertiesListMap : HashMap<String, RouterProperties>
 
         public fun createDialogs(folder: String){
             logger.info(">> createDialogs: $folder")
@@ -46,11 +48,53 @@ class DialogCreator {
             logger.info("-------- start recognition --------")
             logger.info("")
 
-            val phrasesListMap = hashMapOf<String, ArrayList<PhraseText>>()
-            val propertiesListMap = hashMapOf<String, RouterProperties>()
+            phrasesListMap = hashMapOf()
+            propertiesListMap = hashMapOf()
 
+            readPhrases(filesInFolder) // result -> phrasesListMap , propertiesListMap
+
+            for (dialogId in phrasesListMap.keys) {
+                logger.info("")
+                logger.info("-------- creating dialog ${phrasesListMap.keys} --------")
+                logger.info("")
+                try {
+                    val phrases = phrasesListMap[dialogId]!!.toTypedArray()
+                    logger.info("")
+                    logger.info("-------- creating graph --------")
+                    logger.info("")
+                    val graph = createGraph(phrases)
+                    val routerProperty = propertiesListMap[dialogId]!!
+                    val routerFile = File(Configs.OUTPUT_ROUTERS_FILE)
+                    val phraseFile = File(Configs.OUTPUT_PHRASES_FOLDER, "$dialogId.json")
+                    val graphFile = File(Configs.OUTPUT_GRAPHS_FOLDER, "$dialogId.graphml")
+
+                    logger.info("")
+                    logger.info("-------- writing --------")
+                    logger.info("")
+
+                    logger.info("write ${phrases.toList().map { it.id }.toTypedArray().contentToString()} phrases to ${phraseFile.absolutePath}")
+                    PhraseTextStream.write(phrases, phraseFile.absolutePath)
+
+                    logger.info("write graph $graph phrases to ${graphFile.absolutePath}")
+                    GraphMLWriter.outputGraph(graph, graphFile.outputStream())
+
+                    logger.info("write router Property $routerProperty phrases to ${routerFile.absolutePath}")
+                    writeRoutersToFile(
+                        routerFile,
+                        routerProperty
+                    )
+                    logger.info("SUCCESS ")
+                } catch (e: Exception) {
+                    logger.warn("ERROR, skip: ${e.message}")
+                }
+            }
+
+            logger.info("---- end recognition")
+        }
+
+        private fun readPhrases(filesInFolder : List<File>){
             for(file in filesInFolder) {
-                    logger.info("try to parse $file ")
+                logger.info("try to parse $file ")
                 val routerProperty : RouterProperties
                 val phrases : Array<PhraseText>
                 try {
@@ -79,41 +123,6 @@ class DialogCreator {
                     logger.warn("ERROR, skip: ${e.message}")
                 }
             }
-
-            for (dialogId in phrasesListMap.keys) {
-                logger.info("")
-                logger.info("-------- creating dialog ${phrasesListMap.keys} --------")
-                logger.info("")
-                try {
-                    val phrases = phrasesListMap[dialogId]!!.toTypedArray()
-                    logger.info("")
-                    logger.info("-------- creating graph --------")
-                    logger.info("")
-                    val graph = createGraph(phrases)
-                    val routerProperty = propertiesListMap[dialogId]!!
-                    val routerFile = File(Configs.OUTPUT_ROUTERS_FILE)
-                    val phraseFile = File(Configs.OUTPUT_PHRASES_FOLDER, "$dialogId.json")
-                    val graphFile = File(Configs.OUTPUT_GRAPHS_FOLDER, "$dialogId.graphml")
-
-                    logger.info("")
-                    logger.info("-------- writing --------")
-                    logger.info("")
-
-                    logger.info("write ${phrases.toList().map { it.id }.toTypedArray().contentToString()} phrases to ${phraseFile.absolutePath}")
-                    PhraseTextStream.write(phrases, phraseFile.absolutePath)
-
-                    logger.info("write graph $graph phrases to ${graphFile.absolutePath}")
-                    GraphMLWriter.outputGraph(graph, graphFile.outputStream())
-
-                    logger.info("write router Property $routerProperty phrases to ${routerFile.absolutePath}")
-                    writeRoutersToFile(routerFile, routerProperty)
-                    logger.info("SUCCESS ")
-                } catch (e: Exception) {
-                    logger.warn("ERROR, skip: ${e.message}")
-                }
-            }
-
-            logger.info("---- end recognition")
         }
 
         public fun createGraph(phrases : Array<PhraseText>) : Graph{
@@ -163,7 +172,7 @@ class DialogCreator {
             return res.toTypedArray()
         }
 
-        public fun writeRoutersToFile(file: File, routerProperties: RouterProperties ){
+        public fun writeRoutersToFile(file: File, routerProperties: RouterProperties){
             logger.info(">> writeRoutersToFile : file= $file, routerProperties=$routerProperties" )
             val obj = JsonObject(routerProperties.map())
             var rotersArray = JsonArray<JsonObject>()

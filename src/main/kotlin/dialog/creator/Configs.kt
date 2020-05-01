@@ -1,3 +1,5 @@
+package dialog.creator
+
 import java.lang.IllegalArgumentException
 
 class Configs {

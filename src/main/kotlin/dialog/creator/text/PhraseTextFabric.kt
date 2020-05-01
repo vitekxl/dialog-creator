@@ -1,7 +1,6 @@
-package text
+package dialog.creator.text
 
-import Configs
-import dialog.DialogCreator
+import dialog.creator.Configs
 import models.Answer
 import models.AnswerType
 import models.items.text.PhraseText

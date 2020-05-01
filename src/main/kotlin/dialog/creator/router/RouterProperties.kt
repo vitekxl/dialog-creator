@@ -1,4 +1,4 @@
-package router
+package dialog.creator.router
 
 data class RouterProperties(var id : String, var isResetToStart : Boolean, var startPointId: String){
 
