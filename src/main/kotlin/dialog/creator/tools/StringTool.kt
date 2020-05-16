@@ -1,6 +1,6 @@
 package dialog.creator.tools
 
-import models.items.text.PhraseText
+import dialog.system.models.items.text.PhraseText
 import java.lang.StringBuilder
 
 class StringTool {

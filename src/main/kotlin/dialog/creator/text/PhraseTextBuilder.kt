@@ -1,7 +1,7 @@
 package dialog.creator.text
 
-import models.Answer
-import models.items.text.PhraseText
+import dialog.system.models.Answer
+import dialog.system.models.items.text.PhraseText
 import java.lang.IllegalStateException
 
 class PhraseTextBuilder() {

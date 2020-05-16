@@ -25,4 +25,11 @@ data class PhraseTextRaw(var header: String, var textBody: Array<String>, var an
         return result
     }
 
+    override fun toString(): String {
+        return "PhraseTextRaw={header=$header\ntextBody=${textBody
+            .map { it.replace("\n", " '\\n' ") }
+            .joinToString("}, { ", "[{","}]")}" +
+                " \nanswers=${answers.joinToString("}, {", "[{","}]")}"
+    }
+
 }

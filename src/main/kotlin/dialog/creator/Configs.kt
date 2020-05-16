@@ -1,53 +1,28 @@
 package dialog.creator
 
-import java.lang.IllegalArgumentException
-
 class Configs {
     companion object{
-        public var PHRASE_TEXT_DEF_CLASS  : String = "NAN"
-            get() {
-                if(field  == "NAN"){
-                    return "models.items.phrase.FilteredPhrase"
-                }
-                return field
-            }
 
-        public var INPUT_SCRIPT_FOLDER : String = "NAN"
-            get() {
-                if(field == "NAN"){
-                    throw IllegalArgumentException("INPUT FOLDER IS NOT SET")
-                }
-                return field
-            }
 
-        public var OUTPUT_PHRASES_FOLDER : String = "NAN"
-            get() {
-                if(field  == "NAN"){
-                    throw IllegalArgumentException("OUTPUT FOLDER IS NOT SET")
-                }
-                return field
-            }
+        public const val VERSION: String = "1.3"
 
-        public var OUTPUT_GRAPHS_FOLDER : String = "NAN"
-            get() {
-                if(field == "NAN"){
-                    throw IllegalArgumentException("OUTPUT FOLDER IS NOT SET")
-                }
-                return field
-            }
+        public lateinit var ROUTER_START_POINT: String ;
 
-        public var OUTPUT_ROUTERS_FILE : String = "NAN"
-            get() {
-                if(field == "NAN"){
-                    throw IllegalArgumentException("ROUTERS FOLDER IS NOT SET")
-                }
-                return field
-            }
+        public var CREATE_WORLD_ROUTER: Boolean  = false
+        public var WORLD_ROUTER_RESET : Boolean = true;
+        public lateinit var WORLD_ROUTER_NAME: String
+
+        public var PHRASE_TEXT_DEF_CLASS  : String = "models.items.phrase.FilteredPhrase"
+        public lateinit var INPUT_SCRIPT_FOLDER : String
+        public lateinit var OUTPUT_PHRASES_FOLDER : String
+        public lateinit var OUTPUT_GRAPHS_FOLDER : String
+        public lateinit var OUTPUT_ROUTERS_FILE : String
 
         public const val DIALOG_READER_HEADER_SEPARATOR  : String = "----"
         public const val DIALOG_READER_MULTIPLY_TEXT_SEPARATOR  : String = "@"
         public const val DIALOG_READER_ROUTER_PROPERTY_SEPARATOR  : String = "$"
         public const val DIALOG_READER_ANSWER_SEPARATOR  : String = ">"
+
 
     }
 

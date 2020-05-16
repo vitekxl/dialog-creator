@@ -1,12 +1,13 @@
 package dialog.creator.text
 
 import dialog.creator.Configs
-import models.Answer
-import models.AnswerType
-import models.items.text.PhraseText
+import dialog.system.models.Answer
+import dialog.system.models.AnswerType
+import dialog.system.models.items.text.PhraseText
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.lang.Exception
 
 class PhraseTextFabric {
     companion object{
@@ -17,9 +18,22 @@ class PhraseTextFabric {
 
         public fun create(raw : PhraseTextRaw): PhraseText {
             val phraseBuilder = PhraseTextBuilder()
-            processHeader(phraseBuilder, raw)
-            processBody(phraseBuilder, raw)
-            processAnswers(phraseBuilder, raw)
+            var headerOK= false;
+            var bodyOK= false;
+            var answerOk= false;
+            try {
+                processHeader(phraseBuilder, raw)
+                headerOK = true;
+                processBody(phraseBuilder, raw)
+                bodyOK = true
+                processAnswers(phraseBuilder, raw)
+                answerOk = true
+            }catch (e: Exception){
+                if (!headerOK) logger.error("error by creating header: ${e.message}")
+                else if (!bodyOK) logger.error("error by creating body: ${e.message}")
+                else if (!answerOk) logger.error("error by creating answer: ${e.message}")
+                throw e
+            }
             val res = phraseBuilder.build()
             if(logger.isDebugEnabled) logger.debug("CREATED: $res")
             else logger.info("CREATED: ${res.id}")

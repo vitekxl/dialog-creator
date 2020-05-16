@@ -27,26 +27,27 @@ class DialogReader {
                 var readText = ""
                 var rawText = PhraseTextRaw()
                 var cnt = 0;
-                for (line in it.readLines()) {
-                    if (line.trim().startsWith("//")) continue; // comments
+                for (_line in it.readLines()) {
+                    val line = _line.trim();
+                    if (line.startsWith("//")) continue; // comments
                     var exit = false
                     cnt ++;
                     try {
                         while (!exit) {
                             exit = true
                             when (stepCnt) {
-                                0 -> if (line.contains(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
-                                    rawText.header = line.split(Configs.DIALOG_READER_HEADER_SEPARATOR)[1].trim()
+                                0 -> if (line.startsWith(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
+                                    rawText.header = line.substringAfter(Configs.DIALOG_READER_HEADER_SEPARATOR).trim()
                                     stepCnt++
                                 }
-                                1 -> if (line.contains(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)) {
+                                1 -> if (line.startsWith(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)) {
                                     prepareAndAddText(
                                         readText,
                                         texts
                                     );
-                                    readText = line.split(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR)[1].trim()
+                                    readText = line.substringAfter(Configs.DIALOG_READER_MULTIPLY_TEXT_SEPARATOR).trim()
 
-                                } else if (line.contains(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
+                                } else if (line.startsWith(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
                                     prepareAndAddText(
                                         readText,
                                         texts
@@ -60,9 +61,9 @@ class DialogReader {
                                     readText += "\n"
                                     readText += line
                                 }
-                                2 -> if (line.contains(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
-                                    answers.add(line.split(Configs.DIALOG_READER_ANSWER_SEPARATOR)[1].trim())
-                                } else if (line.contains(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
+                                2 -> if (line.startsWith(Configs.DIALOG_READER_ANSWER_SEPARATOR)) {
+                                    answers.add(line.substringAfter(Configs.DIALOG_READER_ANSWER_SEPARATOR).trim())
+                                } else if (line.startsWith(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
                                     rawText.answers = answers.toTypedArray()
 
                                     if(logger.isDebugEnabled) logger.debug("READ: $rawText")
@@ -84,6 +85,8 @@ class DialogReader {
                 if(answers.isNotEmpty()){
                     rawText.answers = answers.toTypedArray()
                     list.add(rawText)
+                    if(logger.isDebugEnabled) logger.debug("READ: $rawText")
+                    else logger.info("READ: ${rawText.header}")
                     answers.clear()
                 }
             }
@@ -93,13 +96,14 @@ class DialogReader {
         }
 
         public fun readProperty(file: File): RouterProperties {
-            logger.info(">> readProperty from $file")
+            logger.info("")
+            logger.info("------> read Property from ${file.name}")
 
             val map = hashMapOf<String,Any>()
             FileReader(file).use {
                 for (line in it.readLines()) {
-                    if(line.contains(Configs.DIALOG_READER_ROUTER_PROPERTY_SEPARATOR)){
-                        val arr = line.split(Configs.DIALOG_READER_ROUTER_PROPERTY_SEPARATOR)[1].trim().split("=")
+                    if(line.startsWith(Configs.DIALOG_READER_ROUTER_PROPERTY_SEPARATOR)){
+                        val arr = line.substringAfter(Configs.DIALOG_READER_ROUTER_PROPERTY_SEPARATOR).trim().split("=")
                         if(arr[0] == "isResetToStart"){
                             map[arr[0]] = arr[1].toBoolean()
                         }else{
@@ -108,7 +112,7 @@ class DialogReader {
                     }
                     if(line.contains(Configs.DIALOG_READER_HEADER_SEPARATOR)){
                         val res = RouterProperties(map)
-                        logger.info(">> read Property $res")
+                        logger.info("found Property $res")
                         return res
 
                     }
