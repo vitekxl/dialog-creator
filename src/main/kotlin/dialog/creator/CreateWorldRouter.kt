@@ -23,7 +23,7 @@ class CreateWorldRouter {
             val routerworld = WorldRouterCreator.create(routerProperties, router, graphs, phrases)
             DialogCreator().writeRouterPropertiesToFile(arrayListOf(routerProperties), router)
             val graphFile = File(graphs, "${routerworld.id}.graphml")
-            GraphMLWriter.outputGraph(routerworld.graph, graphFile.outputStream())
+            GraphMLWriter.outputGraph(routerworld.graph.graph, graphFile.outputStream())
 
         }
     }

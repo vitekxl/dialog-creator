@@ -1,22 +1,24 @@
 package dialog.creator.dialog
 
-import dialog.creator.Configs
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
-import dialog.creator.text.PhraseTextFabric
 import com.tinkerpop.blueprints.Graph
 import com.tinkerpop.blueprints.Vertex
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLWriter
-import dialog.system.models.AnswerType
+import dialog.creator.Configs
+import dialog.creator.parser.DialogParser
+import dialog.creator.parser.PhraseTextParser
+import dialog.creator.router.RouterProperties
+import dialog.creator.tools.LogUtil
+import dialog.creator.tools.StaticList
+import dialog.system.io.PhraseTextStream
 import dialog.system.models.Indexable
+import dialog.system.models.answer.AnswerType
 import dialog.system.models.items.text.PhraseText
-import dialog.system.models.items.text.PhraseTextStream
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import dialog.creator.router.RouterProperties
-import dialog.creator.text.PhraseTextRaw
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileReader
@@ -26,6 +28,7 @@ import java.nio.file.Files.isRegularFile
 import java.nio.file.Paths
 import kotlin.streams.toList
 
+
 class DialogCreator(
     private val outputPhrasesFolder: String = Configs.OUTPUT_PHRASES_FOLDER,
     private val outputRoutersFile: String = Configs.OUTPUT_ROUTERS_FILE,
@@ -34,11 +37,12 @@ class DialogCreator(
     companion object {
 
         private val logger = LoggerFactory.getLogger(DialogCreator::class.java) as Logger
+        private val logUtil = LogUtil(logger)
     }
 
-    private val errorListMessages = arrayListOf<String>()
+    private val errorListMessages = StaticList.list
 
-    public fun createAndWriteDialogs(folder: String ) : Boolean {
+    public fun createAndWriteDialogs(folder: String) : Boolean {
         logger.info(">> createDialogs: $folder")
 
         val filesInFolder = Files
@@ -49,9 +53,9 @@ class DialogCreator(
 
         filesInFolder.forEach { logger.info("found: ${it.name}") }
 
-        logStep("start recognition")
+        logUtil.logStep("start recognition")
 
-        val phrasesListMap: HashMap<String, ArrayList<PhraseText>> = readPhraseTextsLists(filesInFolder)
+        val phrasesListMap: HashMap<String, ArrayList<PhraseText>> = PhraseTextParser.readPhraseTextsLists(filesInFolder)
         val propertiesMap: HashMap<String, RouterProperties> = readRouterProperties(filesInFolder)
 
         writePhrases(phrasesListMap, outputPhrasesFolder)
@@ -63,13 +67,13 @@ class DialogCreator(
             errorListMessages.forEach { logger.error(it) }
         }
 
-        logStep("end recognition")
+        logUtil.logStep("end recognition")
         return  errorListMessages.isEmpty()
     }
 
 
     private fun writePhrases(phrasesListMap: HashMap<String, ArrayList<PhraseText>>, outputPhrasesFolder: String) {
-        logStep("write phrases")
+        logUtil.logStep("write phrases")
         for (dialogId in phrasesListMap.keys) {
             try {
                 val phrases = phrasesListMap[dialogId]!!.toTypedArray()
@@ -80,7 +84,7 @@ class DialogCreator(
                 )
                 PhraseTextStream.write(phrases, phraseFile.absolutePath)
             } catch (e: Exception) {
-                logError("ERROR by writing phrase $dialogId: ${e.message}")
+                logUtil.logError( "ERROR by writing phrase $dialogId: ${e.message}")
             }
         }
         logger.info("SUCCESS")
@@ -88,10 +92,10 @@ class DialogCreator(
 
 
     private fun writeGraphs(phrasesListMap: HashMap<String, ArrayList<PhraseText>>, outputGraphsFolder: String) {
-        logStep("Write Graphs")
+        logUtil.logStep( "Write Graphs")
 
         for (dialogId in phrasesListMap.keys) {
-            logStep("creating dialo ${dialogId}")
+            logUtil.logStep("creating dialo ${dialogId}")
             try {
                 val phrases = phrasesListMap[dialogId]!!.toTypedArray()
                 val graph = createGraph(phrases)
@@ -100,53 +104,27 @@ class DialogCreator(
                 GraphMLWriter.outputGraph(graph, graphFile.outputStream())
 
             } catch (e: Exception) {
-                logError("ERROR by writing Graph ${dialogId}: ${e.message}")
+                logUtil.logError("ERROR by writing Graph ${dialogId}: ${e.message}")
             }
         }
         logger.info("SUCCESS")
     }
 
 
-    private fun readPhraseTextsLists(filesInFolder: List<File>): HashMap<String, ArrayList<PhraseText>> {
-        logStep("read phrases text")
-        val phrasesListMap: HashMap<String, ArrayList<PhraseText>> = hashMapOf()
-
-        for (file in filesInFolder) {
-            val routerProperty: RouterProperties
-            val phrases: Array<PhraseText>
-
-            try {
-                routerProperty = DialogReader.readProperty(file)
-                phrases = readPhrasesFromFile(file)
-
-                val dialogName = routerProperty.id
-                if (phrasesListMap[dialogName] == null) {
-                    phrasesListMap[dialogName] = arrayListOf();
-                }
-
-                logger.info("add ${phrases.map { it.id }.toTypedArray().contentToString()} to $dialogName")
-                phrasesListMap[dialogName]!!.addAll(phrases);
-            } catch (e: Exception) {
-                logStep("ERROR by reading router text from $file, skip: ${e.message}")
-            }
-        }
-        return phrasesListMap;
-    }
-
     private fun readRouterProperties(filesInFolder: List<File>): HashMap<String, RouterProperties> {
-        logStep("read routers property")
+        logUtil.logStep( "read routers property")
         val propertiesMap = HashMap<String, RouterProperties>();
 
         for (file in filesInFolder) {
             val routerProperty: RouterProperties
 
             try {
-                routerProperty = DialogReader.readProperty(file)
+                routerProperty = DialogParser.readProperty(file)
                 if (propertiesMap[routerProperty.id] == null) {
                     propertiesMap[routerProperty.id] = routerProperty;
                 }
             } catch (e: Exception) {
-                logError("ERROR by reading router property from $file, skip: ${e.message}")
+                logUtil.logError( "ERROR by reading router property from $file, skip: ${e.message}")
             }
         }
         return propertiesMap;
@@ -189,20 +167,7 @@ class DialogCreator(
         return graph
     }
 
-    public fun readPhrasesFromFile(file: File): Array<PhraseText> {
-        logger.info(">> readPhrasesFromFile : ${file.name}")
-        logger.info("")
-        val res = arrayListOf<PhraseText>()
-        for (phraseTextRaw in DialogReader.readPhraseTextRaw(file)) {
-            try {
-                res.add(PhraseTextFabric.create(phraseTextRaw))
-            } catch (e: Exception) {
-                logError("cannot be parsed correctly : ${e.message} \n$phraseTextRaw")
-            }
-        }
-        logger.info("<< readPhrasesFromFile : read total ${res.size} phrases")
-        return res.toTypedArray()
-    }
+
 
 
     public fun writeRouterPropertiesToFile(
@@ -210,7 +175,7 @@ class DialogCreator(
         filePath: String,
         isOverwrite: Boolean = false
     ) {
-        logStep("Write Router Properties")
+        logUtil.logStep( "Write Router Properties")
         val file = File(filePath)
         //routers file could already exist, and its needed to add new routers to this file
         var routersArray = JsonArray<JsonObject>()
@@ -269,14 +234,5 @@ class DialogCreator(
     }
 
 
-    private fun logStep(stepName: String) {
-        logger.info("")
-        logger.info("-------- $stepName --------")
-        logger.info("")
-    }
 
-    private fun logError(msg: String) {
-        logger.warn(msg)
-        errorListMessages.add(msg)
-    }
 }

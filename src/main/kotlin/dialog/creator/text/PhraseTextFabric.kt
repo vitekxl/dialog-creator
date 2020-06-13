@@ -1,8 +1,8 @@
 package dialog.creator.text
 
 import dialog.creator.Configs
-import dialog.system.models.Answer
-import dialog.system.models.AnswerType
+import dialog.system.models.answer.Answer
+import dialog.system.models.answer.AnswerType
 import dialog.system.models.items.text.PhraseText
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger

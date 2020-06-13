@@ -5,12 +5,12 @@ import com.tinkerpop.blueprints.Vertex
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLWriter
 import dialog.creator.dialog.DialogCreator
-import dialog.system.models.AnswerType
+import dialog.system.models.answer.AnswerType
 import dialog.system.models.Indexable
 import dialog.system.models.items.text.PhraseText
-import dialog.system.models.items.text.PhraseTextStream
+import dialog.system.io.PhraseTextStream
 import dialog.system.models.router.Router
-import dialog.system.models.router.RouterStream
+import dialog.system.io.RouterStream
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -20,15 +20,13 @@ import kotlin.streams.toList
 
 class WorldRouterCreator {
 
-
-
     companion object {
         private val logger = LoggerFactory.getLogger(WorldRouterCreator::class.java) as Logger
 
 
         public fun create(routerProperties: RouterProperties, pathToRouter: String, pathToGraphs: String, pathToPhrases: String) : Router {
             logStep("start create world router")
-            val routers = RouterStream.readMany(pathToRouter, pathToGraphs)
+            val routers = RouterStream.read(pathToRouter, pathToGraphs)
             val dialogsId = routers.map { it.id }
             val phrases = arrayListOf<PhraseText>()
             // val exitEnterAnswerMap<String, String>
@@ -45,7 +43,7 @@ class WorldRouterCreator {
                 .map { File(pathToPhrases, it.fileName.toString()).absolutePath }
                 .forEach {
                     logger.info("read $it")
-                    phrases.addAll(PhraseTextStream.readMany(it)!!)
+                    phrases.addAll(PhraseTextStream.read(it)!!)
                 }
 
             val exitEnterPhrases = phrases
@@ -89,12 +87,12 @@ class WorldRouterCreator {
             DialogCreator().writeRouterPropertiesToFile(arrayListOf(routerProperties), pathToRouter)
             val graphFile = File(pathToGraphs, "${routerworld.id}.graphml")
             logger.info("write world router graph ${graphFile.absoluteFile}")
-            GraphMLWriter.outputGraph(routerworld.graph, graphFile.outputStream())
+            GraphMLWriter.outputGraph(routerworld.graph.graph, graphFile.outputStream())
         }
 
         private fun getRouterIdContainedPhase(routers: Array<Router>, itemId: String) : String?{
             routers.forEach {
-                if(graphContainVertexWithProperty(it.graph, itemId)) return it.id;
+                if(graphContainVertexWithProperty(it.graph.graph, itemId)) return it.id;
             }
             return null;
         }

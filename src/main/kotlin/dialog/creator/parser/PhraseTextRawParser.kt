@@ -1,23 +1,23 @@
-package dialog.creator.dialog
+package dialog.creator.parser
 
 import dialog.creator.Configs
+import dialog.creator.text.PhraseTextRaw
+import dialog.creator.tools.LogUtil
+import dialog.creator.tools.StringTool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import dialog.creator.router.RouterProperties
-import dialog.creator.text.PhraseTextRaw
-import dialog.creator.tools.StringTool
 import java.io.File
 import java.io.FileReader
-import java.lang.Exception
 
-class DialogReader {
+class PhraseTextRawParser {
 
     companion object {
+        private val logger = LoggerFactory.getLogger(PhraseTextRawParser::class.java) as Logger
+        private val logUtil = LogUtil(logger)
 
-        private val logger = LoggerFactory.getLogger(DialogReader::class.java) as Logger
 
-        public fun readPhraseTextRaw(file: File): Array<PhraseTextRaw> {
-             logger.info(">> readPhraseTextRaw from $file")
+        public fun parseRaw(file: File): Array<PhraseTextRaw> {
+            logger.info(">> readPhraseTextRaw from $file")
             val list = ArrayList<PhraseTextRaw>()
 
             FileReader(file).use {
@@ -31,7 +31,7 @@ class DialogReader {
                     val line = _line.trim();
                     if (line.startsWith("//")) continue; // comments
                     var exit = false
-                    cnt ++;
+                    cnt++;
                     try {
                         while (!exit) {
                             exit = true
@@ -66,7 +66,7 @@ class DialogReader {
                                 } else if (line.startsWith(Configs.DIALOG_READER_HEADER_SEPARATOR)) {
                                     rawText.answers = answers.toTypedArray()
 
-                                    if(logger.isDebugEnabled) logger.debug("READ: $rawText")
+                                    if (logger.isDebugEnabled) logger.debug("READ: $rawText")
                                     else logger.info("READ: ${rawText.header}")
 
                                     list.add(rawText)
@@ -77,15 +77,15 @@ class DialogReader {
                                 }
                             }
                         }
-                    }catch (e : Exception){
-                        logger.error("error at line $cnt : $line ($file) skipped")
+                    } catch (e: java.lang.Exception) {
+                        logUtil.logError("error at line $cnt : $line ($file) skipped")
                         stepCnt = 0;
                     }
                 }
-                if(answers.isNotEmpty()){
+                if (answers.isNotEmpty()) {
                     rawText.answers = answers.toTypedArray()
                     list.add(rawText)
-                    if(logger.isDebugEnabled) logger.debug("READ: $rawText")
+                    if (logger.isDebugEnabled) logger.debug("READ: $rawText")
                     else logger.info("READ: ${rawText.header}")
                     answers.clear()
                 }
@@ -95,41 +95,12 @@ class DialogReader {
             return list.toTypedArray()
         }
 
-        public fun readProperty(file: File): RouterProperties {
-            logger.info("")
-            logger.info("------> read Property from ${file.name}")
-
-            val map = hashMapOf<String,Any>()
-            FileReader(file).use {
-                for (line in it.readLines()) {
-                    if(line.startsWith(Configs.DIALOG_READER_ROUTER_PROPERTY_SEPARATOR)){
-                        val arr = line.substringAfter(Configs.DIALOG_READER_ROUTER_PROPERTY_SEPARATOR).trim().split("=")
-                        if(arr[0] == "isResetToStart"){
-                            map[arr[0]] = arr[1].toBoolean()
-                        }else{
-                            map[arr[0]] = arr[1].trim()
-                        }
-                    }
-                    if(line.contains(Configs.DIALOG_READER_HEADER_SEPARATOR)){
-                        val res = RouterProperties(map)
-                        logger.info("found Property $res")
-                        return res
-
-                    }
-                }
-            }
-            logger.error(">> id is not found")
-            throw IllegalAccessException("id is not found")
-        }
-
-
         private fun prepareAndAddText(text: String, list: ArrayList<String>) {
             val res =  StringTool.fixText(text);
             if(res.isNotEmpty()) {
                 list.add(res)
             }
         }
-
     }
 
 }
